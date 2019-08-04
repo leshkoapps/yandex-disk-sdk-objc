@@ -4,7 +4,7 @@
 
 
 #import <Foundation/Foundation.h>
-#import "DDXML.h"
+#import <KissXML/KissXML.h>
 
 
 /**

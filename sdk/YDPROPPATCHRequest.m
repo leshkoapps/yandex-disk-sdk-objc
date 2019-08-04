@@ -7,7 +7,7 @@
 #import "YDPROPPATCHProp.h"
 #import "YDWebDAVCommon.h"
 #import "YDPropstatResponse.h"
-#import "DDXMLElementAdditions.h"
+#import <KissXML/KissXML.h>
 
 
 @implementation YDPROPPATCHRequest

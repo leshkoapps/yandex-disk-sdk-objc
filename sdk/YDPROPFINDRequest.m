@@ -5,7 +5,7 @@
 
 #import "YDPROPFINDRequest.h"
 #import "YDPropstatResponse.h"
-#import "DDXMLElementAdditions.h"
+#import <KissXML/KissXML.h>
 
 @interface YDPROPFINDRequest ()
 

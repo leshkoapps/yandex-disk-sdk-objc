@@ -4,7 +4,7 @@
 
 
 #import "YDProp.h"
-#import "DDXML.h"
+#import <KissXML/KissXML.h>
 
 
 typedef enum {

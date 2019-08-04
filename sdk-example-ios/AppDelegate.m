@@ -72,13 +72,13 @@
 
 - (NSString *)clientID
 {
-#error Replace the following with the data you got when registering your app at: https://oauth.yandex.ru/
+//#error Replace the following with the data you got when registering your app at: https://oauth.yandex.ru/
     return @"00112233445566778899aabbccddeeff";
 }
 
 -(NSString *)redirectURL
 {
-#warning Replace the following with the data you got when registering your app at: https://oauth.yandex.ru/
+//#warning Replace the following with the data you got when registering your app at: https://oauth.yandex.ru/
     return @"http://sdk-example.auth";
 }
 

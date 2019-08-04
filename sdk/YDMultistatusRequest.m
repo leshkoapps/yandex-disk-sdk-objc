@@ -5,7 +5,7 @@
 
 #import "YDMultistatusRequest.h"
 #import "YDWebDAVCommon.h"
-#import "DDXMLElementAdditions.h"
+#import <KissXML/KissXML.h>
 
 
 @implementation YDMultistatusRequest

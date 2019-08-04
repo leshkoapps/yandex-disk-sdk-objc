@@ -4,7 +4,7 @@
 
 
 #import "YDRequest.h"
-#import "DDXML.h"
+#import <KissXML/KissXML.h>
 
 
 @interface YDDiskRequest : YDRequest
