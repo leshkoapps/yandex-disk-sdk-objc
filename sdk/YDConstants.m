@@ -16,10 +16,14 @@ NSString *const kYDSessionConnectionErrorDomain = @"kYDSessionConnectionErrorDom
 NSString *const kYDSessionConnectionDidFailAuthenticateWithError = @"kYDSessionConnectionDidFailAuthenticateWithError";
 NSString *const kYDSessionResponseError = @"kYDSessionResponseError";
 
+
+NSString *const kYDSessionDidStartAuthRequestNotification = @"kYDSessionDidStartAuthRequestNotification";
+NSString *const kYDSessionDidStopAuthRequestNotification = @"kYDSessionDidStopAuthRequestNotification";
 NSString *const kYDSessionDidAuthNotification = @"kYDSessionDidAuthNotification";
 NSString *const kYDSessionDidFailWithAuthRequestNotification = @"kYDSessionDidFailWithAuthRequestNotification";
 NSString *const kYDSessionDidFailWithFetchDirectoryRequestNotification = @"kYDSessionDidFailWithFetchDirectoryRequestNotification";
 NSString *const kYDSessionDidFailWithFetchStatusRequestNotification = @"kYDSessionDidFailWithFetchStatusRequestNotification";
+NSString *const kYDSessionDidFailWithFetchUserInfoRequestNotification = @"kYDSessionDidFailWithFetchUserInfoRequestNotification";
 NSString *const kYDSessionDidFailToCreateDirectoryNotification = @"kYDSessionDidFailToCreateDirectoryNotification";
 NSString *const kYDSessionDidCreateDirectoryNotification = @"kYDSessionDidCreateDirectoryNotification";
 NSString *const kYDSessionDidSendCreateDirectoryRequestNotification = @"kYDSessionDidSendCreateDirectoryRequestNotification";
@@ -31,9 +35,7 @@ NSString *const kYDSessionDidMoveNotification = @"kYDSessionDidMoveNotification"
 NSString *const kYDSessionDidSendMoveRequestNotification = @"kYDSessionDidSendMoveRequestNotification";
 NSString *const kYDSessionDidStartUploadFileNotification = @"kYDSessionDidStartUploadFileNotification";
 NSString *const kYDSessionDidFinishUploadFileNotification = @"kYDSessionDidFinishUploadFileNotification";
-NSString *const kYDSessionDidSendPartialDataForFileNotification = @"kYDSessionDidSendPartialDataForFileNotification";
 NSString *const kYDSessionDidFailUploadFileNotification = @"kYDSessionDidFailUploadFileNotification";
-NSString *const kYDSessionDidGetPartialDataForFileNotification = @"kYDSessionDidGetPartialDataForFileNotification";
 NSString *const kYDSessionDidDownloadFileNotification = @"kYDSessionDidDownloadFileNotification";
 NSString *const kYDSessionDidFailToDownloadFileNotification = @"kYDSessionDidFailToDownloadFileNotification";
 NSString *const kYDSessionDidStartDownloadFileNotification = @"kYDSessionDidStartDownloadFileNotification";

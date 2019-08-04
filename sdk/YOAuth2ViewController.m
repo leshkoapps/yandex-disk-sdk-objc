@@ -60,6 +60,18 @@
 
 #pragma mark - UIWebViewDelegate methods
 
+- (void)webViewDidStartLoad:(UIWebView *)webView{
+    [[NSNotificationCenter defaultCenter] postNotificationInMainQueueWithName:kYDSessionDidStartAuthRequestNotification
+                                                                       object:self
+                                                                     userInfo:nil];
+}
+
+- (void)webViewDidFinishLoad:(UIWebView *)webView{
+    [[NSNotificationCenter defaultCenter] postNotificationInMainQueueWithName:kYDSessionDidStopAuthRequestNotification
+                                                                       object:self
+                                                                     userInfo:nil];
+}
+
 - (BOOL)webView:(UIWebView *)webView shouldStartLoadWithRequest:(NSURLRequest *)request navigationType:(UIWebViewNavigationType)navigationType
 {
     NSString *uri = request.URL.absoluteString;
@@ -94,7 +106,7 @@
 - (void)webView:(UIWebView *)webView didFailLoadWithError:(NSError *)error
 {
     if (!self.done) {
-        NSLog(@"%@", error.localizedDescription);
+        YDLog(@"%@", error.localizedDescription);
         [self handleError:error];
     }
 }

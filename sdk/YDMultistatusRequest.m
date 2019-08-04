@@ -48,38 +48,43 @@
     return multistatusResponse;
 }
 
+- (void)cancel{
+    [super cancel];
+    self.didReceiveMultistatusResponsesBlock = nil;
+}
+
 - (void)processReceivedData
 {
     if (self.lastResponse.statusCode == 207) {
-        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-            if (self.receivedData.length == 0) {
-                return;
-            }
+        if (self.receivedData.length == 0 || self.isCancelled) {
+            return;
+        }
 
-            NSMutableArray *responses = [NSMutableArray arrayWithCapacity:0];
+        NSMutableArray *responses = [NSMutableArray arrayWithCapacity:0];
 
-            DDXMLNode *webDAVNamespace = YDWebDAVDefaultDAVXMLNamespace();
-            NSString *webDAVNamespaceStr = webDAVNamespace.stringValue;
+        DDXMLNode *webDAVNamespace = YDWebDAVDefaultDAVXMLNamespace();
+        NSString *webDAVNamespaceStr = webDAVNamespace.stringValue;
 
-            DDXMLDocument *xmlDoc = [[DDXMLDocument alloc] initWithData:self.receivedData options:0 error:nil];
-            DDXMLElement *rootElement = xmlDoc.rootElement;
+        DDXMLDocument *xmlDoc = [[DDXMLDocument alloc] initWithData:self.receivedData options:0 error:nil];
+        DDXMLElement *rootElement = xmlDoc.rootElement;
 
-            NSArray *responseElements = [rootElement elementsForLocalName:@"response" URI:webDAVNamespaceStr];
+        NSArray *responseElements = [rootElement elementsForLocalName:@"response" URI:webDAVNamespaceStr];
 
-            for (DDXMLElement *responseElement in responseElements) {
-                YDMultiStatusResponse *multistatusResponse = [self multistatusResponseForXMLElement:responseElement];
-                [responses addObject:multistatusResponse];
-            }
+        for (DDXMLElement *responseElement in responseElements) {
+            YDMultiStatusResponse *multistatusResponse = [self multistatusResponseForXMLElement:responseElement];
+            [responses addObject:multistatusResponse];
+        }
 
-            self.multistatusResponses = responses;
+        self.multistatusResponses = responses;
 
-            // Call delegate callback
-            if (self.didReceiveMultistatusResponsesBlock != nil) {
-                dispatch_async(self.callbackQueue, ^{
+        // Call delegate callback
+        if (self.didReceiveMultistatusResponsesBlock != nil) {
+            dispatch_async(self.callbackQueue, ^{
+                if(self.isCancelled==NO){
                     self.didReceiveMultistatusResponsesBlock(self.multistatusResponses);
-                });
-            }
-        });
+                }
+            });
+        }
     }
 }
 

@@ -65,6 +65,23 @@ typedef void (^YDPublishHandler)(NSError *err, NSURL *url);
  */
 typedef void (^YDHandler)(NSError *err);
 
+typedef void (^YDUserLoginHandler)(NSError *err, NSString *login);
+
+typedef void (^YDProgressHandler)(UInt64 totalBytesWritten, UInt64 totalBytesExpectedToWrite);
+
+typedef void (^YDPartialDataHandler)(UInt64 receivedDataLength, UInt64 totalDataLength, NSData *data);
+
+typedef void (^YDDidReceiveResponseHandler)(NSURLResponse *response);
+
+typedef void (^YDDidFinishLoadingHandler)(void);
+
+
+
+@protocol YDSessionRequest <NSObject>
+
+- (void)cancel;
+
+@end
 
 /**
  @abstract Session object to access Yandex Disk.
@@ -105,7 +122,7 @@ typedef void (^YDHandler)(NSError *err);
  @return
     An initialized YDSession object or nil.
  */
-- (instancetype)initWithDelegate:(id<YDSessionDelegate>)delegate;
+- (instancetype)initWithDelegate:(id<YDSessionDelegate>)delegate callBackQueue:(dispatch_queue_t)queue;
 
 /**
  @abstract Fetches the content of a directory in the cloud.
@@ -121,7 +138,7 @@ typedef void (^YDHandler)(NSError *err);
  @param block
     A handler block as described for YDFetchDirectoryHandler.
  */
-- (void)fetchDirectoryContentsAtPath:(NSString *)path completion:(YDFetchDirectoryHandler)block;
+- (id<YDSessionRequest>)fetchDirectoryContentsAtPath:(NSString *)path completion:(YDFetchDirectoryHandler)block;
 
 /**
  @abstract Fetches the status of a file or directory in the cloud.
@@ -137,7 +154,9 @@ typedef void (^YDHandler)(NSError *err);
  @param block
     A handler block as described for YDFetchStatusHandler.
  */
-- (void)fetchStatusForPath:(NSString *)path completion:(YDFetchStatusHandler)block;
+- (id<YDSessionRequest>)fetchStatusForPath:(NSString *)path completion:(YDFetchStatusHandler)block;
+
+- (id<YDSessionRequest>)fetchUserLoginWithCompletion:(YDUserLoginHandler)block;
 
 /**
  @abstract Creates a new directory in the cloud.
@@ -159,7 +178,7 @@ typedef void (^YDHandler)(NSError *err);
  @param block
     A handler block as described for YDHandler.
  */
-- (void)createDirectoryAtPath:(NSString *)path completion:(YDHandler)block;
+- (id<YDSessionRequest>)createDirectoryAtPath:(NSString *)path completion:(YDHandler)block;
 
 /**
  @abstract Removes a file or directory from the cloud.
@@ -179,7 +198,7 @@ typedef void (^YDHandler)(NSError *err);
  @param block
     A handler block as described for YDHandler.
  */
-- (void)removeItemAtPath:(NSString *)path completion:(YDHandler)block;
+- (id<YDSessionRequest>)removeItemAtPath:(NSString *)path completion:(YDHandler)block;
 
 /**
  @abstract Moves a file or directory in the cloud to the trash.
@@ -201,7 +220,7 @@ typedef void (^YDHandler)(NSError *err);
  @param block
     A handler block as described for YDHandler.
  */
-- (void)trashItemAtPath:(NSString *)path completion:(YDHandler)block;
+- (id<YDSessionRequest>)trashItemAtPath:(NSString *)path completion:(YDHandler)block;
 
 /**
  @abstract Moves a file or directory in the cloud to a new location.
@@ -223,7 +242,7 @@ typedef void (^YDHandler)(NSError *err);
  @param block
     A handler block as described for YDHandler.
  */
-- (void)moveItemAtPath:(NSString *)path toPath:(NSString *)topath completion:(YDHandler)block;
+- (id<YDSessionRequest>)moveItemAtPath:(NSString *)path toPath:(NSString *)topath completion:(YDHandler)block;
 
 /**
  @abstract Uploads a new file into the cloud.
@@ -246,7 +265,7 @@ typedef void (^YDHandler)(NSError *err);
  @param block
     A handler block as described for YDHandler.
  */
-- (void)uploadFile:(NSString *)file toPath:(NSString *)path completion:(YDHandler)block;
+- (id<YDSessionRequest>)uploadFile:(NSString *)file toPath:(NSString *)path progress:(YDProgressHandler)progress completion:(YDHandler)block;
 
 /**
  @abstract Downloads a new file from the cloud.
@@ -271,7 +290,15 @@ typedef void (^YDHandler)(NSError *err);
  @param block
     A handler block as described for YDHandler.
  */
-- (void)downloadFileFromPath:(NSString *)path toFile:(NSString *)file completion:(YDHandler)block;
+- (id<YDSessionRequest>)downloadFileFromPath:(NSString *)path toFile:(NSString *)file progress:(YDProgressHandler)progress completion:(YDHandler)block;
+
+
+- (id<YDSessionRequest>)partialContentForFileAtPath:(NSString *)srcRemotePath
+                                         withParams:(NSDictionary *)params
+                                           response:(YDDidReceiveResponseHandler)response
+                                               data:(YDPartialDataHandler)data
+                                         completion:(YDHandler)completion;
+
 
 /**
  @abstract      Publishes a file or directory by providing a valid public URL for it.
@@ -291,7 +318,7 @@ typedef void (^YDHandler)(NSError *err);
  @param block
     A handler block as described for YDPublishHandler.
  */
-- (void)publishItemAtPath:(NSString *)path completion:(YDPublishHandler)block;
+- (id<YDSessionRequest>)publishItemAtPath:(NSString *)path completion:(YDPublishHandler)block;
 
 /**
  @abstract      Unpublishes a file or directory by invalidating its public URL.
@@ -311,6 +338,8 @@ typedef void (^YDHandler)(NSError *err);
  @param block
     A handler block as described for YDHandler.
  */
-- (void)unpublishItemAtPath:(NSString *)path completion:(YDHandler)block;
+- (id<YDSessionRequest>)unpublishItemAtPath:(NSString *)path completion:(YDHandler)block;
+
+
 
 @end

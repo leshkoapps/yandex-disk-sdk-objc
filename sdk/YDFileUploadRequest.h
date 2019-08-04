@@ -3,11 +3,14 @@
  */
 
 
-#import "YDStreamUploadRequest.h"
+#import "YDDiskRequest.h"
 
 
-@interface YDFileUploadRequest : YDStreamUploadRequest
+@interface YDFileUploadRequest : YDDiskRequest
 
 @property (nonatomic, strong) NSURL *localURL;
+@property (nonatomic, copy) NSString *md5;
+@property (nonatomic, copy) NSString *sha256;
+
 
 @end

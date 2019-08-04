@@ -6,15 +6,17 @@
 #import "YDRequest.h"
 #import "YDConstants.h"
 
-@interface YDRequest ()
+@interface YDRequest (){
+    BOOL _isCancelled;
+}
 
 @property (nonatomic, strong) NSURL *URL;
 @property (nonatomic, strong) NSMutableData *receivedData;
 @property (nonatomic, strong) NSFileHandle *fileHandle;
 @property (nonatomic, strong) NSFileHandle *uploadFileHandle;
 @property (nonatomic, copy) NSURLRequest *lastRequest;
+@property (nonatomic, copy) NSURLRequest *mainRequest;
 @property (nonatomic, strong) NSHTTPURLResponse *lastResponse;
-@property (nonatomic, assign) BOOL isCanceled;
 @property (nonatomic, assign) UInt64 receivedDataLength;
 @property (nonatomic, strong) NSURLConnection *connection;
 
@@ -39,7 +41,7 @@
 - (NSString *)description
 {
 	NSMutableString *description = [[NSMutableString alloc] initWithString:super.description];
-	[description appendFormat:@", URL: %@", self.URL];
+	[description appendFormat:@", URL: %@",self.URL];
 	return description;
 }
 
@@ -66,52 +68,63 @@
 
 - (void)start
 {
-	NSLog(@"%@ attempts to start", self);
+	YDLog(@"%@ attempts to start", self);
 	if (self.hasActiveConnection == YES) {
-        NSLog(@"%@ failed to start because it is already running", self);
+        YDLog(@"%@ failed to start because it is already running", self);
 		return;
 	}
 
     self.receivedDataLength = 0;
-    self.isCanceled = NO;
+    _isCancelled = NO;
     self.receivedData = nil;
 
 	NSURLRequest *req = self.buildRequest;
+    self.mainRequest = req;
 
 	NSAssert1(req != nil, @"%@ failed to build HTTP request.", self);
 	if (req == nil) {
-        NSLog(@"%@ failed to build HTTP request.", self);
+        YDLog(@"%@ failed to build HTTP request.", self);
 		return;
 	}
 
     if ( req.HTTPBody.length > 0) {
-        NSLog(@"BODY: %@", [[NSString alloc] initWithData:req.HTTPBody encoding:NSUTF8StringEncoding]);
+        YDLog(@"BODY: %@", [[NSString alloc] initWithData:req.HTTPBody encoding:NSUTF8StringEncoding]);
     }
 
-	_connection = [[NSURLConnection alloc] initWithRequest:req
+    YDLog(@"METHOD: %@", req.HTTPMethod);
+    
+    [req.allHTTPHeaderFields enumerateKeysAndObjectsUsingBlock:^(id key, id obj, BOOL *stop) {
+        YDLog(@"%@: %@", key,obj);
+    }];
+    
+	self.connection = [[NSURLConnection alloc] initWithRequest:req
 												 delegate:self
 										 startImmediately:YES];
-	if (_connection == nil) {
-        NSLog(@"%@ failed to create request connection.", self);
+	if (self.connection == nil) {
+        YDLog(@"%@ failed to create request connection.", self);
 		return;
 	}
 }
 
 - (void)cancel
 {
-    _isCanceled = YES;
+    _isCancelled = YES;
 
-	NSLog(@"%@ cancel", self);
+	YDLog(@"%@ cancel", self);
 
 	[self closeConnection];
-
     [self removeFileIfExist];
+    
+    self.shouldRedirectBlock = nil;
+    self.didReceiveResponseBlock = nil;
+    self.didGetPartialDataBlock = nil;
+    self.didSendBodyData = nil;
+    self.didFinishLoadingBlock = nil;
+    self.didFailBlock = nil;
+}
 
-    NSError *error = [NSError errorWithDomain:kYDSessionRequestErrorDomain
-                                         code:YDRequestErrorCodeCanceled
-                                     userInfo:nil];
-
-    [self callDelegateWithError:error];
+- (BOOL)isCancelled{
+    return _isCancelled;
 }
 
 #pragma mark - NSURLConnection delegate callbacks
@@ -121,14 +134,16 @@
  totalBytesWritten:(NSInteger)totalBytesWritten
 totalBytesExpectedToWrite:(NSInteger)totalBytesExpectedToWrite
 {
-    if (self.isCanceled) {
+    if (self.isCancelled) {
         [self cancel];
         return;
     }
 
     if (self.didSendBodyData!= nil) {
         dispatch_async(self.callbackQueue, ^{
-            self.didSendBodyData(totalBytesWritten, totalBytesExpectedToWrite);
+            if(self.isCancelled==NO){
+                self.didSendBodyData(totalBytesWritten, totalBytesExpectedToWrite);
+            }
         });
     }
 }
@@ -137,18 +152,20 @@ totalBytesExpectedToWrite:(NSInteger)totalBytesExpectedToWrite
 			 willSendRequest:(NSURLRequest *)aRequest
 			redirectResponse:(NSURLResponse *)aResponse
 {
-    if (self.isCanceled) {
+    if (self.isCancelled) {
         [self cancel];
         return nil;
     }
 
-    self.lastResponse = (NSHTTPURLResponse *)aResponse;
-
-    if (self.lastResponse != nil) {
+    
+    if (aResponse != nil) {
+        self.lastResponse = (NSHTTPURLResponse *)aResponse;
         __block NSURLRequest *redirectRequest = [self buildRedirectRequestUsingDefault:aRequest];
         if (self.shouldRedirectBlock != nil) {
             dispatch_async(self.callbackQueue, ^{
-                redirectRequest = self.shouldRedirectBlock(aResponse, aRequest);
+                if(self.isCancelled==NO){
+                    redirectRequest = self.shouldRedirectBlock(aResponse, aRequest);
+                }
             });
         }
 
@@ -164,29 +181,36 @@ totalBytesExpectedToWrite:(NSInteger)totalBytesExpectedToWrite
 
 - (void)connection:(NSURLConnection *)connection didReceiveResponse:(NSURLResponse *)response
 {
-    NSInteger statusCode = [(NSHTTPURLResponse *)response statusCode];
-    NSLog(@"%@ did receive response %ld %@", self, (long)statusCode, [NSHTTPURLResponse localizedStringForStatusCode:statusCode]);
-
-    if (self.isCanceled) {
+    YDLog(@"%@ did receive response %ld %@", self, (long)[(NSHTTPURLResponse *)response statusCode], [NSHTTPURLResponse localizedStringForStatusCode:statusCode]);
+    
+    if (self.isCancelled) {
         [self cancel];
         return;
     }
-
-    self.lastResponse = (NSHTTPURLResponse *)response;
-
-    // Call delegate callback
+    
+    NSHTTPURLResponse *httpResponse = (NSHTTPURLResponse *)response;
+    
+    self.lastResponse = httpResponse;
+    
+    [self.lastResponse.allHeaderFields enumerateKeysAndObjectsUsingBlock:^(id key, id obj, BOOL *stop) {
+        YDLog(@"%@: %@", key,obj);
+    }];
 
     // By default we accept all 2xx codes, but delegate can override this rule.
     __block BOOL responseAccepted = [self acceptResponseCode:self.lastResponse.statusCode];
 
+    // Call delegate callback
     if (self.didReceiveResponseBlock != nil) {
+        NSURLResponse *resp = self.lastResponse;
         dispatch_async(self.callbackQueue, ^{
-            self.didReceiveResponseBlock(self.lastResponse, &responseAccepted);
+            if(self.isCancelled==NO){
+                self.didReceiveResponseBlock(resp, &responseAccepted);
+            }
         });
     }
 
     if (responseAccepted == NO) {
-        NSLog(@"%@: response has not been accepted. Closing connection", self);
+        YDLog(@"%@: response has not been accepted. Closing connection", self);
         [self closeConnection];
 
         NSError *error = [NSError errorWithDomain:kYDSessionRequestErrorDomain
@@ -199,86 +223,91 @@ totalBytesExpectedToWrite:(NSInteger)totalBytesExpectedToWrite
 
 - (void)connection:(NSURLConnection *)aConnection didReceiveData:(NSData *)data
 {
-	NSLog(@"%@ did receive some data (%llu)", self, _receivedDataLength + data.length);
+	//YDLog(@"%@ did receive some data (%llu)", self, _receivedDataLength + data.length);
 
-    if (self.isCanceled) {
+    if (self.isCancelled) {
         [self cancel];
         return;
     }
 
     UInt64 expectedContentLength = self.lastResponse.expectedContentLength;
-    if (expectedContentLength == NSURLResponseUnknownLength) {
-        expectedContentLength = 0;
-    }
 
-    if (self.fileURL != nil) {
-        NSError *error = nil;
-        // Delete file if exist
-        if (self.receivedDataLength == 0 && [[NSFileManager defaultManager] fileExistsAtPath:self.fileURL.path] == YES)
-            [[NSFileManager defaultManager] removeItemAtPath:self.fileURL.path error:&error];
+    if(self.skipReceivedData==NO){
+        if (self.fileURL != nil) {
+            NSError *error = nil;
+            // Delete file if exist
+            if (self.receivedDataLength == 0 && [[NSFileManager defaultManager] fileExistsAtPath:self.fileURL.path] == YES)
+                [[NSFileManager defaultManager] removeItemAtPath:self.fileURL.path error:&error];
 
-        if (error == nil && [[NSFileManager defaultManager] fileExistsAtPath:self.fileURL.path] == NO) {
-            NSURL *dirURL = self.fileURL.URLByDeletingLastPathComponent;
-            [[NSFileManager defaultManager] createDirectoryAtPath:dirURL.path
-                                      withIntermediateDirectories:YES
-                                                       attributes:nil
-                                                            error:&error];
-
-            if (error == nil) {
-                [[NSFileManager defaultManager] createFileAtPath:_fileURL.path
-                                                        contents:nil
-                                                      attributes:nil];
-                self.fileHandle = [NSFileHandle fileHandleForWritingAtPath:self.fileURL.path];
+            if (error == nil && [[NSFileManager defaultManager] fileExistsAtPath:self.fileURL.path] == NO) {
+                NSURL *dirURL = self.fileURL.URLByDeletingLastPathComponent;
+                [[NSFileManager defaultManager] createDirectoryAtPath:dirURL.path
+                                          withIntermediateDirectories:YES
+                                                           attributes:nil
+                                                                error:&error];
+                if (error == nil) {
+                    [[NSFileManager defaultManager] createFileAtPath:_fileURL.path
+                                                            contents:nil
+                                                          attributes:nil];
+                    self.fileHandle = [NSFileHandle fileHandleForWritingAtPath:self.fileURL.path];
+                }
             }
-        }
 
-        // Handle create/delete file errors
-        if (error != nil) {
-            [self closeConnection];
-            [self removeFileIfExist];
-            [self callDelegateWithError:error];
-            return;
-        }
-
-        @try {
-            [self.fileHandle seekToEndOfFile];
-            [self.fileHandle writeData:data];
-        }
-        @catch (NSException *exception) {
-            if ([exception.name isEqualToString:NSFileHandleOperationException]) {
+            // Handle create/delete file errors
+            if (error != nil) {
                 [self closeConnection];
                 [self removeFileIfExist];
-                NSError *error = [NSError errorWithDomain:kYDSessionRequestErrorDomain code:YDRequestErrorCodeFileIO userInfo:exception.userInfo];
                 [self callDelegateWithError:error];
                 return;
             }
-            else {
-                @throw exception;
+
+            @try {
+                [self.fileHandle seekToEndOfFile];
+                [self.fileHandle writeData:data];
+            }
+            @catch (NSException *exception) {
+                if ([exception.name isEqualToString:NSFileHandleOperationException]) {
+                    [self closeConnection];
+                    [self removeFileIfExist];
+                    NSError *error = [NSError errorWithDomain:kYDSessionRequestErrorDomain code:YDRequestErrorCodeFileIO userInfo:exception.userInfo];
+                    [self callDelegateWithError:error];
+                    return;
+                }
+                else {
+                    @throw exception;
+                }
             }
         }
-    }
-    else {
-        if (self.receivedData == nil) {
-            self.receivedData = [NSMutableData dataWithCapacity:expectedContentLength];
+        else {
+            if (self.receivedData == nil) {
+                self.receivedData = [NSMutableData dataWithCapacity:0];
+            }
+            [self.receivedData appendData:data];
         }
-
-        [self.receivedData appendData:data];
     }
-
+    
     self.receivedDataLength += data.length;
-
+    UInt64 receivedDataLength = self.receivedDataLength;
+    
     // Call delegate callback
     if (self.didGetPartialDataBlock != nil) {
         dispatch_async(self.callbackQueue, ^{
-            self.didGetPartialDataBlock(self.receivedDataLength, expectedContentLength);
+            if(self.isCancelled==NO){
+                self.didGetPartialDataBlock(receivedDataLength, expectedContentLength,data);
+            }
         });
     }
 }
 
 - (void)connection:(NSURLConnection *)aConnection didFailWithError:(NSError *)error
 {
-	NSLog(@"%@ did fail with error:\n%@", self, error);
+	YDLog(@"%@ did fail with error:\n%@", self, error);
 
+    if (self.isCancelled) {
+        [self cancel];
+        return;
+    }
+    
     [self closeConnection];
 
     [self removeFileIfExist];
@@ -288,26 +317,33 @@ totalBytesExpectedToWrite:(NSInteger)totalBytesExpectedToWrite
 
 - (void)connectionDidFinishLoading:(NSURLConnection *)aConnection
 {
-	NSLog(@"%@ did finish loading.", self);
+	YDLog(@"%@ did finish loading.", self);
 
 	[self closeConnection];
 
     if (self.fileHandle != nil) {
         [self.fileHandle closeFile];
-        NSLog(@"DATA stored at: %@", self.fileURL.path);
+        //YDLog(@"DATA stored at: %@", self.fileURL.path);
     }
     else if (self.receivedData.length > 0) {
-        NSLog(@"DATA: %@", [[NSString alloc] initWithData:self.receivedData encoding:NSUTF8StringEncoding]);
+        //YDLog(@"DATA: %@", [[NSString alloc] initWithData:self.receivedData encoding:NSUTF8StringEncoding]);
     }
 
     // Call delegate callback
     if (self.didFinishLoadingBlock != nil) {
+        NSData *data = self.fileURL != nil ? nil : self.receivedData;
         dispatch_async(self.callbackQueue, ^{
-            self.didFinishLoadingBlock(self.fileURL != nil ? nil : self.receivedData);
+            if(self.isCancelled==NO){
+                self.didFinishLoadingBlock(data);
+            }
         });
     }
 
     [self processReceivedData];
+}
+
+- (NSCachedURLResponse *)connection:(NSURLConnection *)connection willCacheResponse:(NSCachedURLResponse *)response {
+    return nil;
 }
 
 #pragma mark - Private
@@ -325,9 +361,18 @@ totalBytesExpectedToWrite:(NSInteger)totalBytesExpectedToWrite
 
 - (void)prepareRequest:(NSMutableURLRequest *)request
 {
+    
+    [request setCachePolicy:NSURLRequestReloadIgnoringLocalCacheData];
+    
     if (self.OAuthToken.length > 0) {
         NSString *OAuthHeaderField = [NSString stringWithFormat:@"OAuth %@", self.OAuthToken];
         [request setValue:OAuthHeaderField forHTTPHeaderField:@"Authorization"];
+    }
+    
+    if(self.params){
+        [self.params enumerateKeysAndObjectsUsingBlock:^(id key, id obj, BOOL *stop) {
+            [request setValue:obj forHTTPHeaderField:key];
+        }];
     }
 
     // We never use cookies for authorization!!!
@@ -402,7 +447,9 @@ totalBytesExpectedToWrite:(NSInteger)totalBytesExpectedToWrite
     // Call delegate callback
     if (self.didFailBlock != nil) {
         dispatch_async(self.callbackQueue, ^{
-            self.didFailBlock(error);
+            if(self.isCancelled==NO){
+                self.didFailBlock(error);
+            }
         });
     }
 }

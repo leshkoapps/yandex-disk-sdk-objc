@@ -17,16 +17,19 @@
 #import "YDDeleteRequest.h"
 #import "YDDiskPOSTRequest.h"
 #import "YDFileUploadRequest.h"
+#import "YDGETRequest.h"
 
 
-@interface YDSession ()
+@interface YDSession (){
+    dispatch_queue_t _callBackQueue;
+}
 
 + (NSURL *)urlForDiskPath:(NSString *)path;
 + (NSURL *)urlForLocalPath:(NSString *)path;
 
 - (void)prepareRequest:(YDDiskRequest *)request;
 
-- (void)removePath:(NSString *)path toTrash:(BOOL)trash completion:(YDHandler)block;
+- (id<YDSessionRequest>)removePath:(NSString *)path toTrash:(BOOL)trash completion:(YDHandler)block;
 
 @end
 
@@ -39,11 +42,11 @@
     return nil;
 }
 
-- (instancetype)initWithDelegate:(id<YDSessionDelegate>)delegate
-{
+- (instancetype)initWithDelegate:(id<YDSessionDelegate>)delegate callBackQueue:(dispatch_queue_t)queue{
     self = [super init];
     if (self) {
         _delegate = delegate;
+        _callBackQueue = queue;
     }
     return self;
 }
@@ -53,21 +56,21 @@
     return self.OAuthToken.length > 0;
 }
 
-- (void)fetchDirectoryContentsAtPath:(NSString *)path completion:(YDFetchDirectoryHandler)block
+- (id<YDSessionRequest>)fetchDirectoryContentsAtPath:(NSString *)path completion:(YDFetchDirectoryHandler)block
 {
     NSURL *url = [YDSession urlForDiskPath:path];
     if (!url) {
         block([NSError errorWithDomain:kYDSessionBadArgumentErrorDomain
                                 code:0
                             userInfo:@{@"listPath": path}], nil);
-        return;
+        return nil;
     }
 
     YDFileListRequest *request = [[YDFileListRequest alloc] initWithURL:url];
     [self prepareRequest:request];
     request.depth = YDWebDAVDepth1;
 
-    request.callbackQueue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
+    request.callbackQueue = _callBackQueue;
     request.props = @[[YDFileListRequest displayNameProp],
                       [YDFileListRequest resourceTypeProp],
                       [YDFileListRequest contentTypeProp],
@@ -78,50 +81,58 @@
                       [YDFileListRequest publicUrlProp],
                       [YDFileListRequest sharedProp]];
 
+    __weak typeof (request) weakRequest = request;
+    
     request.didFailBlock = ^(NSError *error) {
-        NSMutableDictionary *userInfo = [NSMutableDictionary dictionary];
-        userInfo[@"URL"] = url;
-        if (error) userInfo[@"error"] = error;
-        [[NSNotificationCenter defaultCenter] postNotificationInMainQueueWithName:kYDSessionDidFailWithFetchDirectoryRequestNotification
-                                                                           object:self
-                                                                         userInfo:userInfo];
-        block([NSError errorWithDomain:error.domain code:error.code userInfo:userInfo], nil);
+        if(weakRequest.isCancelled==NO){
+            NSMutableDictionary *userInfo = [NSMutableDictionary dictionary];
+            userInfo[@"URL"] = url;
+            if (error) userInfo[@"error"] = error;
+            [[NSNotificationCenter defaultCenter] postNotificationInMainQueueWithName:kYDSessionDidFailWithFetchDirectoryRequestNotification
+                                                                               object:self
+                                                                             userInfo:userInfo];
+            block([NSError errorWithDomain:error.domain code:error.code userInfo:userInfo], nil);
+        }
     };
 
     request.didReceiveMultistatusResponsesBlock = ^(NSArray *responses) {
-        NSMutableArray *fileItems = [NSMutableArray arrayWithCapacity:0];
+        if(weakRequest.isCancelled==NO){
+            NSMutableArray *fileItems = [NSMutableArray arrayWithCapacity:0];
 
-        for (YDMultiStatusResponse *response in responses) {
-            YDItemStat *item = [[YDItemStat alloc] initWithSession:self
-                                                        dictionary:response.successPropValues
-                                                               URL:response.URL];
+            for (YDMultiStatusResponse *response in responses) {
+                YDItemStat *item = [[YDItemStat alloc] initWithSession:self
+                                                            dictionary:response.successPropValues
+                                                                   URL:response.URL];
 
-            if (![response.URL.path isEqual:url.path]) {
-                [fileItems addObject:item];
+                if (![response.URL.path isEqual:url.path]) {
+                    [fileItems addObject:item];
+                }
             }
-        }
 
-        block(nil, fileItems);
+            block(nil, fileItems);
+        }
     };
     
     [request start];
+    
+    return (id<YDSessionRequest>)request;
 }
 
-- (void)fetchStatusForPath:(NSString *)path completion:(YDFetchStatusHandler)block
+- (id<YDSessionRequest>)fetchStatusForPath:(NSString *)path completion:(YDFetchStatusHandler)block
 {
     NSURL *url = [YDSession urlForDiskPath:path];
     if (!url) {
         block([NSError errorWithDomain:kYDSessionBadArgumentErrorDomain
                                 code:0
                             userInfo:@{@"statPath": path}], nil);
-        return;
+        return nil;
     }
 
     YDFileListRequest *request = [[YDFileListRequest alloc] initWithURL:url];
     [self prepareRequest:request];
     request.depth = YDWebDAVDepth0;
 
-    request.callbackQueue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
+    request.callbackQueue = _callBackQueue;
     request.props = @[[YDFileListRequest displayNameProp],
                       [YDFileListRequest resourceTypeProp],
                       [YDFileListRequest contentTypeProp],
@@ -156,22 +167,65 @@
     };
 
     [request start];
+    
+    return (id<YDSessionRequest>)request;
 }
 
-- (void)createDirectoryAtPath:(NSString *)path completion:(YDHandler)block
+- (id<YDSessionRequest>)fetchUserLoginWithCompletion:(YDUserLoginHandler)block{
+    NSString *path = @"/?userinfo";
+    NSURL *url = [YDSession urlForDiskPath:path shouldEscape:NO];
+    if (!url) {
+        block([NSError errorWithDomain:kYDSessionBadArgumentErrorDomain
+                                  code:0
+                              userInfo:@{@"statPath": path}], nil);
+        return nil;
+    }
+    
+    YDGETRequest *request = [[YDGETRequest alloc] initWithURL:url];
+    [self prepareRequest:request];
+    
+    request.callbackQueue = _callBackQueue;
+    
+    request.didFailBlock = ^(NSError *error) {
+        NSMutableDictionary *userInfo = [NSMutableDictionary dictionary];
+        userInfo[@"URL"]=url;
+        if (error) userInfo[@"error"] = error;
+        [[NSNotificationCenter defaultCenter] postNotificationInMainQueueWithName:kYDSessionDidFailWithFetchUserInfoRequestNotification
+                                                                           object:self
+                                                                         userInfo:userInfo];
+        block([NSError errorWithDomain:error.domain code:error.code userInfo:userInfo], nil);
+    };
+    
+    request.didFinishLoadingBlock = ^(NSData *receivedData){
+        NSString *dataStr = [[NSString alloc] initWithData:receivedData encoding:NSUTF8StringEncoding];
+        NSString *login = @"login";
+        if(dataStr.length>0){
+            login = dataStr;
+        }
+        if(block){
+            block(nil,login);
+        }
+    };
+
+    [request start];
+    
+    return (id<YDSessionRequest>)request;
+}
+
+- (id<YDSessionRequest>)createDirectoryAtPath:(NSString *)path completion:(YDHandler)block
 {
     NSURL *url = [YDSession urlForDiskPath:path];
     if (!url) {
         block([NSError errorWithDomain:kYDSessionBadArgumentErrorDomain
                                 code:0
                             userInfo:@{@"mkDirAtPath": path}]);
-        return;
+        return nil;
     }
 
     YDMKCOLRequest *request = [[YDMKCOLRequest alloc] initWithURL:url];
     [self prepareRequest:request];
 
-    request.callbackQueue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
+    request.callbackQueue = _callBackQueue;
 
     NSURL *requestURL = [request.URL copy];
 
@@ -199,16 +253,18 @@
     [[NSNotificationCenter defaultCenter] postNotificationInMainQueueWithName:kYDSessionDidSendCreateDirectoryRequestNotification
                                                                        object:self
                                                                      userInfo:userInfo];
+    
+    return (id<YDSessionRequest>)request;
 }
 
-- (void)removePath:(NSString *)path toTrash:(BOOL)trash completion:(YDHandler)block
+- (id<YDSessionRequest>)removePath:(NSString *)path toTrash:(BOOL)trash completion:(YDHandler)block
 {
     NSURL *url = [YDSession urlForDiskPath:path];
     if (!url) {
         block([NSError errorWithDomain:kYDSessionBadArgumentErrorDomain
                                 code:0
                             userInfo:@{trash?@"trashPath":@"removePath": path}]);
-        return;
+        return nil;
     }
 
     NSString *urlstr = url.absoluteString;
@@ -216,6 +272,8 @@
     url = [NSURL URLWithString:urlstr];
 
     YDDeleteRequest *request = [[YDDeleteRequest alloc] initWithURL:url];
+    request.callbackQueue = _callBackQueue;
+    
     [self prepareRequest:request];
 
     NSURL *requestURL = [request.URL copy];
@@ -273,33 +331,35 @@
     [[NSNotificationCenter defaultCenter] postNotificationInMainQueueWithName:kYDSessionDidSendRemoveRequestNotification
                                                                        object:self
                                                                      userInfo:userInfo];
+    
+    return (id<YDSessionRequest>)request;
 }
 
-- (void)removeItemAtPath:(NSString *)path completion:(YDHandler)block
+- (id<YDSessionRequest>)removeItemAtPath:(NSString *)path completion:(YDHandler)block
 {
-    [self removePath:path toTrash:NO completion:block];
+    return [self removePath:path toTrash:NO completion:block];
 }
 
-- (void)trashItemAtPath:(NSString *)path completion:(YDHandler)block
+- (id<YDSessionRequest>)trashItemAtPath:(NSString *)path completion:(YDHandler)block
 {
-    [self removePath:path toTrash:YES completion:block];
+    return [self removePath:path toTrash:YES completion:block];
 }
 
-- (void)moveItemAtPath:(NSString *)path toPath:(NSString *)topath completion:(YDHandler)block
+- (id<YDSessionRequest>)moveItemAtPath:(NSString *)path toPath:(NSString *)topath completion:(YDHandler)block
 {
     NSURL *fromurl = [YDSession urlForDiskPath:path];
     if (!fromurl) {
         block([NSError errorWithDomain:kYDSessionBadArgumentErrorDomain
                                 code:0
                             userInfo:@{@"movePath": path}]);
-        return;
+        return nil;
     }
     NSURL *tourl = [YDSession urlForDiskPath:topath];
     if (!tourl) {
         block([NSError errorWithDomain:kYDSessionBadArgumentErrorDomain
                                 code:1
                             userInfo:@{@"toPath": topath}]);
-        return;
+        return nil;
     }
 
     YDMOVERequest *request = [[YDMOVERequest alloc] initWithURL:fromurl];
@@ -307,7 +367,7 @@
 
     request.destination = [tourl.path stringByAddingPercentEscapesUsingEncoding: NSUTF8StringEncoding];
 
-    request.callbackQueue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
+    request.callbackQueue = _callBackQueue;
 
     NSDictionary *userInfo = @{@"from": fromurl,
                                  @"to": tourl};
@@ -333,138 +393,200 @@
     [[NSNotificationCenter defaultCenter] postNotificationInMainQueueWithName:kYDSessionDidSendMoveRequestNotification
                                                                        object:self
                                                                      userInfo:userInfo];
+    
+     return (id<YDSessionRequest>)request;
 }
 
-- (void)uploadFile:(NSString *)aFile toPath:(NSString *)aPath completion:(YDHandler)block
+- (id<YDSessionRequest>)uploadFile:(NSString *)aFile toPath:(NSString *)aPath progress:(YDProgressHandler)progress completion:(YDHandler)block
 {
     NSURL *path = [YDSession urlForDiskPath:aPath];
     if (!path) {
         block([NSError errorWithDomain:kYDSessionBadArgumentErrorDomain
                                 code:0
                             userInfo:@{@"putPath": aPath}]);
-        return;
+        return nil;
     }
     NSURL *file = [YDSession urlForLocalPath:aFile];
     if (!file) {
         block([NSError errorWithDomain:kYDSessionBadArgumentErrorDomain
                                 code:1
                             userInfo:@{@"fromFile": file}]);
-        return;
+        return nil;
     }
 
-    dispatch_async(dispatch_get_main_queue(), ^{
-        YDFileUploadRequest *request = [[YDFileUploadRequest alloc] initWithURL:path];
-        request.callbackQueue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
-        request.OAuthToken = self.OAuthToken;
-        request.localURL = file;
-        request.uploadedDataSize = 0;
-        request.timeoutInterval = 30;
+    YDFileUploadRequest *request = [[YDFileUploadRequest alloc] initWithURL:path];
+    request.callbackQueue = _callBackQueue;
+    request.OAuthToken = self.OAuthToken;
+    request.localURL = file;
+    request.timeoutInterval = 30;
 
-        NSDictionary *userInfo = @{@"URL": request.URL};
-        [[NSNotificationCenter defaultCenter] postNotificationInMainQueueWithName:kYDSessionDidStartUploadFileNotification
-                                                                           object:self
-                                                                         userInfo:userInfo];
-
-        request.didFinishLoadingBlock = ^(NSData *receivedData) {
-            [[NSNotificationCenter defaultCenter] postNotificationInMainQueueWithName:kYDSessionDidFinishUploadFileNotification
-                                                                               object:self
-                                                                             userInfo:userInfo];
-            block(nil);
-        };
-
-        request.didSendBodyData = ^(UInt64 totalBytesWritten, UInt64 totalBytesExpectedToWrite) {
-            NSDictionary *userInfo = @{@"URL": path,
-                                       @"totalSent":@(totalBytesWritten),
-                                       @"totalExpected":@(totalBytesExpectedToWrite)};
-            [[NSNotificationCenter defaultCenter] postNotificationInMainQueueWithName:kYDSessionDidSendPartialDataForFileNotification
-                                                                               object:self
-                                                                             userInfo:userInfo];
-        };
-
-        request.didFailBlock = ^(NSError *error) {
-            NSDictionary *userInfo = @{@"uploadPath": path,
-                                         @"fromFile": file,
-                                            @"error": error};
-            [[NSNotificationCenter defaultCenter] postNotificationInMainQueueWithName:kYDSessionDidFailUploadFileNotification
-                                                                               object:self
-                                                                             userInfo:userInfo];
-            block([NSError errorWithDomain:error.domain code:error.code userInfo:userInfo]);
-        };
-
-        [request start];
-    });
-}
-
-- (void)downloadFileFromPath:(NSString *)path toFile:(NSString *)aFilePath completion:(YDHandler)block
-{
-    NSURL *url = [YDSession urlForDiskPath:path];
-    if (!url) {
-        block([NSError errorWithDomain:kYDSessionBadArgumentErrorDomain
-                                code:0
-                            userInfo:@{@"getPath": path}]);
-        return;
-    }
-    NSURL *filePath = [YDSession urlForDiskPath:aFilePath];
-    if (!filePath) {
-        block([NSError errorWithDomain:kYDSessionBadArgumentErrorDomain
-                                code:1
-                            userInfo:@{@"toFile": aFilePath}]);
-        return;
-    }
-
-    YDDiskRequest *request = [[YDDiskRequest alloc] initWithURL:url];
-    request.fileURL = filePath;
-    [self prepareRequest:request];
-
-    NSURL *requestURL = [request.URL copy];
-
-    request.callbackQueue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
-
-    request.didReceiveResponseBlock = ^(NSURLResponse *response, BOOL *accept) { };
-
-    request.didGetPartialDataBlock = ^(UInt64 receivedDataLength, UInt64 expectedDataLength) {
-        NSDictionary *userInfo = @{@"URL": requestURL,
-                                   @"receivedDataLength": @(receivedDataLength),
-                                   @"expectedDataLength": @(expectedDataLength)};
-        [[NSNotificationCenter defaultCenter] postNotificationInMainQueueWithName:kYDSessionDidGetPartialDataForFileNotification
-                                                                           object:self
-                                                                         userInfo:userInfo];
-    };
+    NSDictionary *userInfo = @{@"URL": request.URL};
+    [[NSNotificationCenter defaultCenter] postNotificationInMainQueueWithName:kYDSessionDidStartUploadFileNotification
+                                                                       object:self
+                                                                     userInfo:userInfo];
 
     request.didFinishLoadingBlock = ^(NSData *receivedData) {
-        NSDictionary *userInfo = @{@"URL": requestURL,
-                                   @"receivedDataLength": @(receivedData.length)};
-        [[NSNotificationCenter defaultCenter] postNotificationInMainQueueWithName:kYDSessionDidDownloadFileNotification
+        [[NSNotificationCenter defaultCenter] postNotificationInMainQueueWithName:kYDSessionDidFinishUploadFileNotification
                                                                            object:self
                                                                          userInfo:userInfo];
         block(nil);
     };
 
+    request.didSendBodyData = ^(UInt64 totalBytesWritten, UInt64 totalBytesExpectedToWrite) {
+        progress(totalBytesWritten,totalBytesExpectedToWrite);
+    };
+
     request.didFailBlock = ^(NSError *error) {
-        NSDictionary *userInfo = @{@"URL": requestURL};
-        [[NSNotificationCenter defaultCenter] postNotificationInMainQueueWithName:kYDSessionDidFailToDownloadFileNotification
+        NSDictionary *userInfo = @{@"uploadPath": path,
+                                     @"fromFile": file,
+                                        @"error": error};
+        [[NSNotificationCenter defaultCenter] postNotificationInMainQueueWithName:kYDSessionDidFailUploadFileNotification
                                                                            object:self
                                                                          userInfo:userInfo];
-
         block([NSError errorWithDomain:error.domain code:error.code userInfo:userInfo]);
     };
 
     [request start];
+    
+    return (id<YDSessionRequest>)request;
+}
 
+
+- (id<YDSessionRequest>)downloadFileFromPath:(NSString *)path toFile:(NSString *)file progress:(YDProgressHandler)progress completion:(YDHandler)block{
+    return [self downloadFileFromPath:path toFile:file
+                           withParams:nil
+                             response:nil
+                                 data:nil
+                             progress:progress
+                           completion:block];
+}
+
++ (NSString *)uuidString {
+    CFUUIDRef uuid = CFUUIDCreate(kCFAllocatorDefault);
+    NSString *uuidStr = (__bridge_transfer NSString *)CFUUIDCreateString(kCFAllocatorDefault, uuid);
+    CFRelease(uuid);
+    return uuidStr;
+}
+
++ (NSString*)temporaryFilePath{
+    return [NSTemporaryDirectory() stringByAppendingPathComponent: [NSString stringWithFormat: @"%@.%@", [[self class] uuidString],@"tmp"]];
+}
+
+- (id<YDSessionRequest>)partialContentForFileAtPath:(NSString *)srcRemotePath
+                                         withParams:(NSDictionary *)params
+                                           response:(YDDidReceiveResponseHandler)response
+                                               data:(YDPartialDataHandler)data
+                                         completion:(YDHandler)completion{
+    return [self downloadFileFromPath:srcRemotePath toFile:nil withParams:params response:response data:data progress:nil completion:completion];
+}
+
+- (id<YDSessionRequest>)downloadFileFromPath:(NSString *)path
+                                      toFile:(NSString *)aFilePath
+                                  withParams:(NSDictionary *)params
+                                    response:(YDDidReceiveResponseHandler)responseBlock
+                                        data:(YDPartialDataHandler)dataBlock
+                                    progress:(YDProgressHandler)progressBlock
+                                  completion:(YDHandler)completionBlock{
+    
+    NSURL *url = [YDSession urlForDiskPath:path];
+    if (!url) {
+        completionBlock([NSError errorWithDomain:kYDSessionBadArgumentErrorDomain
+                                  code:0
+                              userInfo:@{@"getPath": path}]);
+        return nil;
+    }
+    
+    BOOL skipReceivedData = NO;
+    
+    if(aFilePath==nil){
+        aFilePath = [[self class] temporaryFilePath];
+        skipReceivedData = YES;
+    }
+    
+    NSURL *filePath = [YDSession urlForLocalPath:aFilePath];
+    if (!filePath) {
+        completionBlock([NSError errorWithDomain:kYDSessionBadArgumentErrorDomain
+                                  code:1
+                              userInfo:@{@"toFile": aFilePath}]);
+        return nil;
+    }
+    
+    YDDiskRequest *request = [[YDDiskRequest alloc] initWithURL:url];
+    request.fileURL = filePath;
+    request.params = params;
+    request.skipReceivedData = skipReceivedData;
+    [self prepareRequest:request];
+    
+    NSURL *requestURL = [request.URL copy];
+    
+    request.callbackQueue = _callBackQueue;
+    
+    request.didReceiveResponseBlock = ^(NSURLResponse *response, BOOL *accept) {
+        if(responseBlock){
+            responseBlock(response);
+        }
+    };
+    
+    request.didGetPartialDataBlock = ^(UInt64 receivedDataLength, UInt64 expectedDataLength, NSData *data){
+        if(progressBlock){
+            progressBlock(receivedDataLength,expectedDataLength);
+        }
+        if(dataBlock){
+            dataBlock(receivedDataLength,expectedDataLength,data);
+        }
+    };
+    
+    request.didFinishLoadingBlock = ^(NSData *receivedData) {
+        
+        if(skipReceivedData){
+            [[self class] removeTemporaryFileAtPath:aFilePath];
+        }
+        
+        NSDictionary *userInfo = @{@"URL": requestURL,
+                                   @"receivedDataLength": @(receivedData.length)};
+        [[NSNotificationCenter defaultCenter] postNotificationInMainQueueWithName:kYDSessionDidDownloadFileNotification
+                                                                           object:self
+                                                                         userInfo:userInfo];
+        completionBlock(nil);
+    };
+    
+    request.didFailBlock = ^(NSError *error) {
+        
+        if(skipReceivedData){
+            [[self class] removeTemporaryFileAtPath:aFilePath];
+        }
+        
+        NSDictionary *userInfo = @{@"URL": requestURL};
+        [[NSNotificationCenter defaultCenter] postNotificationInMainQueueWithName:kYDSessionDidFailToDownloadFileNotification
+                                                                           object:self
+                                                                         userInfo:userInfo];
+        
+        completionBlock([NSError errorWithDomain:error.domain code:error.code userInfo:userInfo]);
+    };
+    
+    [request start];
+    
     NSDictionary *userInfo = @{@"URL": request.URL};
     [[NSNotificationCenter defaultCenter] postNotificationInMainQueueWithName:kYDSessionDidStartDownloadFileNotification
                                                                        object:self
                                                                      userInfo:userInfo];
+    return (id<YDSessionRequest>)request;
 }
 
-- (void)publishItemAtPath:(NSString *)aPath completion:(YDPublishHandler)block
++ (void)removeTemporaryFileAtPath:(NSString *)path{
+    if([[NSFileManager defaultManager] fileExistsAtPath:path isDirectory:nil]){
+        [[NSFileManager defaultManager] removeItemAtPath:path error:nil];
+    }
+}
+
+- (id<YDSessionRequest>)publishItemAtPath:(NSString *)aPath completion:(YDPublishHandler)block
 {
     NSURL *path = [YDSession urlForDiskPath:aPath];
     if (!path) {
         block([NSError errorWithDomain:kYDSessionBadArgumentErrorDomain
                                 code:0
                             userInfo:@{@"publishPath": aPath}], nil);
-        return;
+        return nil;
     }
 
     NSString *pathUrl = path.absoluteString;
@@ -472,6 +594,7 @@
     NSURL *publishURL = [NSURL URLWithString:pathUrl];
 
     YDDiskPOSTRequest *request = [[YDDiskPOSTRequest alloc] initWithURL:publishURL];
+    request.callbackQueue = _callBackQueue;
     [self prepareRequest:request];
     request.timeoutInterval = 15;
 
@@ -517,16 +640,18 @@
     };
     
     [request start];
+    
+    return (id<YDSessionRequest>)request;
 }
 
-- (void)unpublishItemAtPath:(NSString *)aPath completion:(YDHandler)block
+- (id<YDSessionRequest>)unpublishItemAtPath:(NSString *)aPath completion:(YDHandler)block
 {
     NSURL *path = [YDSession urlForDiskPath:aPath];
     if (!path) {
         block([NSError errorWithDomain:kYDSessionBadArgumentErrorDomain
                                 code:0
                             userInfo:@{@"unPublishPath": aPath}]);
-        return;
+        return nil;
     }
 
     NSString *pathUrl = path.absoluteString;
@@ -534,6 +659,7 @@
     NSURL *publishURL = [NSURL URLWithString:pathUrl];
 
     YDDiskPOSTRequest *request = [[YDDiskPOSTRequest alloc] initWithURL:publishURL];
+    request.callbackQueue = _callBackQueue;
     [self prepareRequest:request];
     request.timeoutInterval = 15;
 
@@ -561,21 +687,41 @@
     };
 
     [request start];
+
+    return (id<YDSessionRequest>)request;
 }
 
 #pragma mark - Private
 
 + (NSURL *)urlForDiskPath:(NSString *)uri
 {
-    uri = [@"https://webdav.yandex.ru" stringByAppendingFormat:([uri hasPrefix:@"/"]?@"%@":@"/%@"), uri];
-    uri = [uri stringByAddingPercentEscapesUsingEncoding: NSUTF8StringEncoding];
-
-    return [NSURL URLWithString:uri];
+    return [self urlForDiskPath:uri shouldEscape:YES];
 }
 
-+ (NSURL *)urlForLocalPath:(NSString *)uri
++ (NSURL *)urlForDiskPath:(NSString *)uri shouldEscape:(BOOL)shouldEscape
 {
-    NSURL *url = [NSURL URLWithString:uri];
+    NSString *aPath = [NSString stringWithFormat:([uri hasPrefix:@"/"]?@"%@":@"/%@"), uri];
+    CFStringRef escaped = CFURLCreateStringByAddingPercentEscapes(NULL,
+                                                                  (CFStringRef)aPath,
+                                                                  NULL,
+                                                                  (shouldEscape)?CFSTR(":?#[]@!$ &'()*+,;=\"<>%{}|\\^~`"):NULL, // otherwise e.g. ? character would be misinterpreted as query
+                                                                  kCFStringEncodingUTF8);
+    
+    
+    uri = (__bridge NSString *)escaped;
+    
+    uri = [@"https://webdav.yandex.ru" stringByAppendingString:uri];
+    
+    NSURL *result = [NSURL URLWithString:uri];
+    
+    CFRelease(escaped);
+    
+    return result;
+}
+
++ (NSURL *)urlForLocalPath:(NSString *)path
+{
+    NSURL *url = [NSURL fileURLWithPath:path];
     return url.isFileURL?url:nil;
 }
 

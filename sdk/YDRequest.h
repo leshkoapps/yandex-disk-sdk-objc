@@ -8,7 +8,7 @@
 
 typedef NSURLRequest *(^YORequestShouldRedirectBlock)(NSURLResponse *response, NSURLRequest *redirectURLRequest);
 typedef void (^YORequestDidReceiveResponseBlock)(NSURLResponse *response, BOOL *accept);
-typedef void (^YORequestDidGetPartialDataBlock)(UInt64 receivedDataLength, UInt64 expectedDataLength);
+typedef void (^YORequestDidGetPartialDataBlock)(UInt64 receivedDataLength, UInt64 expectedDataLength, NSData *data);
 typedef void (^YORequestDidSendBodyDataBlock)(UInt64 totalBytesWritten, UInt64 totalBytesExpectedToWrite);
 typedef void (^YORequestDidFinishLoadingBlock)(NSData *receivedData);
 typedef void (^YORequestDidFailBlock)(NSError *error);
@@ -20,6 +20,7 @@ typedef void (^YORequestDidFailBlock)(NSError *error);
 
 - (void)start;
 - (void)cancel;
+- (BOOL)isCancelled;
 
 /** @name Things that are configured by the init method and can't be changed */
 
@@ -29,6 +30,8 @@ typedef void (^YORequestDidFailBlock)(NSError *error);
 
 @property (nonatomic, copy) NSString *OAuthToken;
 @property (nonatomic, strong) NSURL *fileURL;
+@property (nonatomic, copy) NSDictionary *params;
+@property (nonatomic, assign)BOOL skipReceivedData;
 @property (nonatomic, assign) NSTimeInterval timeoutInterval;
 
 /** @name Things that you may configure at any time */
@@ -68,5 +71,4 @@ typedef enum {
     YDRequestErrorCodeUnknown,
     YDRequestErrorCodeWrongResponseStatusCode,
     YDRequestErrorCodeFileIO,
-    YDRequestErrorCodeCanceled
 } YDRequestErrorCode;

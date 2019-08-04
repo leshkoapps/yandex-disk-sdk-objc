@@ -36,7 +36,7 @@
 
     NSInteger errorCode = kYDSessionErrorUnknown;
 
-    NSString *errorLocalizedDescription = NSLocalizedString(@"AuthAuthorizationUnknownErrorText", @"Текст неизвестной ошибки авторизации.");
+    NSString *errorLocalizedDescription = @"AuthAuthorizationUnknownErrorText";
 
     NSError *error = [NSError errorWithDomain:kYDSessionConnectionErrorDomain
                                          code:errorCode
@@ -47,7 +47,7 @@
                                                                        object:self
                                                                      userInfo:userInfo];
 
-    NSLog(@"Error authenticating: %ld %@", (long)statusCode, [NSHTTPURLResponse localizedStringForStatusCode:statusCode]);
+    YDLog(@"Error authenticating: %ld %@", (long)statusCode, [NSHTTPURLResponse localizedStringForStatusCode:statusCode]);
 }
 
 @end
