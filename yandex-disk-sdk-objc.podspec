@@ -10,6 +10,6 @@ Pod::Spec.new do |s|
   s.platform     = :ios, '9.0'
 
   s.source_files = 'sdk/*.{h,m}'
-  s.framework    = 'Foundation'
+  s.framework    = 'Foundation', 'UIKit'
   s.dependency 'KissXML'
 end
