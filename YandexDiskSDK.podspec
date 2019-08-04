@@ -1,5 +1,5 @@
 Pod::Spec.new do |s|
-  s.name         = 'yandex-disk-sdk-objc'
+  s.name         = 'YandexDiskSDK'
   s.version      = '1.0.0'
   s.summary      = 'A pleasant wrapper around the Yandex Disk Cloud API.'
   s.homepage     = 'https://github.com/yandex-disk/yandex-disk-sdk-objc'
