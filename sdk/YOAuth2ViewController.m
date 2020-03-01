@@ -43,12 +43,10 @@
     
     NSURL *url = [NSURL URLWithString:self.authURI];
     NSURLRequest *request = [NSURLRequest requestWithURL:url];
-
+    
     [self.webView loadRequest:request];
     
-    [[NSNotificationCenter defaultCenter] postNotificationInMainQueueWithName:kYDSessionDidStartAuthRequestNotification
-                                                                       object:self
-                                                                     userInfo:nil];
+    
 }
 
 - (void)viewDidAppear:(BOOL)animated {
@@ -59,23 +57,29 @@
 
 #pragma mark - WKWebViewDelegate methods
 
+- (void)webView:(WKWebView *)webView didStartProvisionalNavigation:(null_unspecified WKNavigation *)navigation{
+    [[NSNotificationCenter defaultCenter] postNotificationInMainQueueWithName:kYDSessionDidStartAuthRequestNotification
+                                                                       object:self
+                                                                     userInfo:nil];
+}
+
 - (void)webView:(WKWebView *)webView decidePolicyForNavigationAction:(WKNavigationAction *)navigationAction
 decisionHandler:(void (^)(WKNavigationActionPolicy))decisionHandler {
-
+    
     NSString *uri = navigationAction.request.URL.absoluteString;
     if ([uri hasPrefix:self.delegate.redirectURL]) { // did we get redirected to the redirect url?
         NSArray *split = [uri componentsSeparatedByString:@"#"];
         NSString *param = split[1];
         split = [param componentsSeparatedByString:@"&"];
         NSMutableDictionary *paraDict = [NSMutableDictionary dictionary];
-
+        
         for (NSString *s in split) {
             NSArray *kv = [s componentsSeparatedByString:@"="];
             if (kv) {
                 paraDict[kv[0]] = kv[1];
             }
         }
-
+        
         if (paraDict[@"access_token"]) {
             self.token = paraDict[@"access_token"];
             self.done = YES;
