@@ -7,7 +7,7 @@
 #import "YOAuth2Protocol.h"
 
 
-@interface YOAuth2ViewController : UIViewController <YOAuth2Protocol, UIWebViewDelegate>
+@interface YOAuth2ViewController : UIViewController <YOAuth2Protocol>
 
 - (instancetype)initWithDelegate:(id<YOAuth2Delegate>)delegate;
 
