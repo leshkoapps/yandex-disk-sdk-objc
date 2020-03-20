@@ -42,7 +42,9 @@
     [self.view addSubview:self.webView];
     
     NSURL *url = [NSURL URLWithString:self.authURI];
-    NSURLRequest *request = [NSURLRequest requestWithURL:url];
+    NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:url];
+    [request setAllowsCellularAccess:YES];
+    [request setCachePolicy:NSURLRequestReloadIgnoringLocalCacheData];
     
     [self.webView loadRequest:request];
     

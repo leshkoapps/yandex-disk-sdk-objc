@@ -24,12 +24,13 @@
     self.window = [[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
     self.window.backgroundColor = [UIColor whiteColor];
 
-    self.session = [[YDSession alloc] initWithDelegate:self];
+    dispatch_queue_t callBackQueue = dispatch_queue_create("com.yandexDisk.callback.queue", NULL);
+    self.session = [[YDSession alloc] initWithDelegate:self callBackQueue:callBackQueue];
 
     self.yaDisk = [[DirectoryViewController alloc] initWithSession:self.session path:@"/"];
 
     self.yaDisk.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"Login"
-                                                                                     style:UIBarButtonItemStyleBordered
+                                                                                     style:UIBarButtonItemStylePlain
                                                                                     target:self
                                                                                     action:@selector(authenticate:)];
 

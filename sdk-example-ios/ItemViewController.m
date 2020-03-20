@@ -38,7 +38,7 @@
     activityView = [[UIActivityViewController alloc] initWithActivityItems:activityItems
                                                      applicationActivities:appActivities];
 
-    activityView.completionHandler = ^(NSString *activityType, BOOL completed) {
+    activityView.completionWithItemsHandler = ^(UIActivityType __nullable activityType, BOOL completed, NSArray * __nullable returnedItems, NSError * __nullable activityError) {
         if (completed) {
             if ([activityType isEqualToString:@"ru.yandex.disk.delete"]) {
                 [self.delegate itemsChanged:self];

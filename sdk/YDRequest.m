@@ -362,6 +362,7 @@ totalBytesExpectedToWrite:(NSInteger)totalBytesExpectedToWrite
 - (void)prepareRequest:(NSMutableURLRequest *)request
 {
     
+    [request setAllowsCellularAccess:YES];
     [request setCachePolicy:NSURLRequestReloadIgnoringLocalCacheData];
     
     if (self.OAuthToken.length > 0) {
