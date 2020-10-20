@@ -15,6 +15,7 @@
 @property (nonatomic, strong) WKWebView *webView;
 @property (nonatomic, strong) NSError *error;
 @property (nonatomic, copy, readwrite) NSString *token;
+@property (nonatomic, assign)YOAuth2ViewControllerOptions options;
 
 @end
 
@@ -24,9 +25,10 @@
 @synthesize token = _token;
 @synthesize delegate = _delegate;
 
-- (instancetype)initWithDelegate:(id<YOAuth2Delegate>)authDelegate {
+- (instancetype)initWithDelegate:(id<YOAuth2Delegate>)authDelegate options:(YOAuth2ViewControllerOptions)options{
     self = [super init];
     if (self) {
+        _options = options;
         _delegate = authDelegate;
     }
     return self;
@@ -34,7 +36,18 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    self.webView = [[WKWebView alloc] initWithFrame:self.view.bounds configuration:[WKWebViewConfiguration new]];
+
+    if((self.options & YOAuth2ViewControllerOptionsClearCookies) == YOAuth2ViewControllerOptionsClearCookies){
+        [self clearLoginCookies];
+    }
+    
+    WKWebViewConfiguration *theConfiguration = [[WKWebViewConfiguration alloc] init];
+    @try{if (NSFoundationVersionNumber >= NSFoundationVersionNumber_iOS_9_0) {
+        theConfiguration.websiteDataStore = [WKWebsiteDataStore nonPersistentDataStore];
+    }} @catch(NSException *exc){}
+
+    self.webView = [[WKWebView alloc] initWithFrame:self.view.bounds
+                                      configuration:theConfiguration];
     self.webView.navigationDelegate = self;
     self.webView.translatesAutoresizingMaskIntoConstraints = YES;
     self.webView.autoresizingMask = UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleWidth;
@@ -47,14 +60,57 @@
     [request setCachePolicy:NSURLRequestReloadIgnoringLocalCacheData];
     
     [self.webView loadRequest:request];
-    
-    
 }
 
 - (void)viewDidAppear:(BOOL)animated {
     [super viewDidAppear:animated];
     self.appeared = YES;
     [self handleResult];
+}
+
+#pragma mark - Clear Cookies
+
+- (NSArray *)loginDomains{
+    return @[@"oauth.yandex.ru",
+             @".oauth.yandex.ru",
+             @"oauth.yandex.com",
+             @".oauth.yandex.com",
+             @"webdav.yandex.ru",
+             @".webdav.yandex.ru",
+             @"webdav.yandex.com",
+             @".webdav.yandex.com",
+             @"passport.yandex.ru",
+             @".passport.yandex.ru",
+             @"passport.yandex.com",
+             @".passport.yandex.com",
+             @".yandex.ru",
+             @"yandex.ru",
+             @".yandex.com",
+             @"yandex.com",
+             @".mc.yandex.ru",
+             @"mc.yandex.ru",
+             @".mc.yandex.com",
+             @"mc.yandex.com",
+    ];
+}
+
+- (BOOL)isDomainValidForCookie:(NSHTTPCookie *)cookie domains:(NSArray<NSString *> *)domains{
+    __block BOOL success = NO;
+    [domains enumerateObjectsUsingBlock:^(NSString * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+        if([cookie.domain hasSuffix:obj]){
+            success = YES;
+            *stop = YES;
+        }
+    }];
+    return success;
+}
+
+- (void)clearLoginCookies{
+    for(NSHTTPCookie *cookie in [[NSHTTPCookieStorage sharedHTTPCookieStorage] cookies]) {
+        if([self isDomainValidForCookie:cookie domains:self.loginDomains]){
+             [[NSHTTPCookieStorage sharedHTTPCookieStorage] deleteCookie:cookie];
+        }
+    }
 }
 
 #pragma mark - WKWebViewDelegate methods
