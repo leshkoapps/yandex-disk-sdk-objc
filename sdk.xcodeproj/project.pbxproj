@@ -109,6 +109,8 @@
 		AC2A5B3F254B5DAB00EE7C9D /* NSNotificationCenter+YDAdditions.h in Headers */ = {isa = PBXBuildFile; fileRef = AC2A5B3D254B5DAB00EE7C9D /* NSNotificationCenter+YDAdditions.h */; };
 		AC2A5B40254B5DAB00EE7C9D /* NSNotificationCenter+YDAdditions.m in Sources */ = {isa = PBXBuildFile; fileRef = AC2A5B3E254B5DAB00EE7C9D /* NSNotificationCenter+YDAdditions.m */; };
 		AC2A5B41254B5DAB00EE7C9D /* NSNotificationCenter+YDAdditions.m in Sources */ = {isa = PBXBuildFile; fileRef = AC2A5B3E254B5DAB00EE7C9D /* NSNotificationCenter+YDAdditions.m */; };
+		AC2A5B53254B606400EE7C9D /* YOAuth2ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 0FABF59F176B350600355D74 /* YOAuth2ViewController.m */; };
+		AC2A5B57254B609600EE7C9D /* WebKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AC2A5B56254B609500EE7C9D /* WebKit.framework */; settings = {ATTRIBUTES = (Weak, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -231,6 +233,7 @@
 		AC0354FF2424BF0800AD87D3 /* YDGETRequest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = YDGETRequest.h; sourceTree = "<group>"; };
 		AC2A5B3D254B5DAB00EE7C9D /* NSNotificationCenter+YDAdditions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSNotificationCenter+YDAdditions.h"; sourceTree = "<group>"; };
 		AC2A5B3E254B5DAB00EE7C9D /* NSNotificationCenter+YDAdditions.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSNotificationCenter+YDAdditions.m"; sourceTree = "<group>"; };
+		AC2A5B56254B609500EE7C9D /* WebKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WebKit.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk/System/iOSSupport/System/Library/Frameworks/WebKit.framework; sourceTree = DEVELOPER_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -238,6 +241,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AC2A5B57254B609600EE7C9D /* WebKit.framework in Frameworks */,
 				0FEAB94E17789BAF00E17FFD /* libxml2.dylib in Frameworks */,
 				0FEAB86F1778935B00E17FFD /* Foundation.framework in Frameworks */,
 			);
@@ -288,6 +292,7 @@
 		0F569653175C8EEF00622AB5 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				AC2A5B56254B609500EE7C9D /* WebKit.framework */,
 				0FEAB94C17789A4A00E17FFD /* libxml2.dylib */,
 				0F569654175C8EEF00622AB5 /* Cocoa.framework */,
 				0FB07BDE176AEF2600FF0AE5 /* Foundation.framework */,
@@ -790,6 +795,7 @@
 				0FEAB8FE1778959700E17FFD /* YDResourceTypeProp.m in Sources */,
 				0FEAB8FF1778959700E17FFD /* YDDateRFC822Prop.m in Sources */,
 				0FEAB9011778959700E17FFD /* YDPROPFINDRequest.m in Sources */,
+				AC2A5B53254B606400EE7C9D /* YOAuth2ViewController.m in Sources */,
 				0FEAB9021778959700E17FFD /* YDFileListRequest.m in Sources */,
 				0FEAB9041778959700E17FFD /* YDPROPPATCHProp.m in Sources */,
 				0FEAB9051778959700E17FFD /* YDPROPPATCHRequest.m in Sources */,
@@ -857,10 +863,11 @@
 					/usr/include/libxml2,
 					"./**",
 				);
-				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
 				MACOSX_DEPLOYMENT_TARGET = 10.8;
-				ONLY_ACTIVE_ARCH = NO;
+				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Debug;
 		};
@@ -887,10 +894,11 @@
 					/usr/include/libxml2,
 					"./**",
 				);
-				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
 				MACOSX_DEPLOYMENT_TARGET = 10.8;
 				ONLY_ACTIVE_ARCH = NO;
 				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Release;
 		};
