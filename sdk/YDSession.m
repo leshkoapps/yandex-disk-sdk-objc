@@ -10,7 +10,7 @@
 
 #import "YDSession.h"
 #import "YDConstants.h"
-#import "NSNotificationCenter+Additions.h"
+#import "NSNotificationCenter+YDAdditions.h"
 #import "YDFileListRequest.h"
 #import "YDMKCOLRequest.h"
 #import "YDMOVERequest.h"

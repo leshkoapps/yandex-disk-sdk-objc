@@ -51,7 +51,7 @@
 - (void)authenticateAnimated:(BOOL)animated
 {
     if (!self.session.authenticated) {
-        self.authVC = [[YOAuth2ViewController alloc] initWithDelegate:self];
+        self.authVC = [[YOAuth2ViewController alloc] initWithDelegate:self options:0];
         self.authVC = [[UINavigationController alloc] initWithRootViewController:self.authVC];
 
         [self.navVC presentViewController:self.authVC

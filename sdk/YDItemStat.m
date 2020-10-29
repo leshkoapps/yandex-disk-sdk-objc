@@ -7,7 +7,7 @@
 #import "YDConstants.h"
 #import "YDSession.h"
 #import "YDFileListRequest.h"
-#import "NSNotificationCenter+Additions.h"
+#import "NSNotificationCenter+YDAdditions.h"
 
 
 @interface YDItemStat ()

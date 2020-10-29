@@ -6,7 +6,7 @@
 #import <Foundation/Foundation.h>
 
 
-@interface NSNotificationCenter (Additions)
+@interface NSNotificationCenter (YDAdditions)
 
 - (void)postNotificationInMainQueueWithName:(NSString *)aName
                                      object:(id)anObject

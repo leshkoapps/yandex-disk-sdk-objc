@@ -3,7 +3,7 @@
  */
 
 
-#import "NSNotificationCenter+Additions.h"
+#import "NSNotificationCenter+YDAdditions.h"
 
 @implementation NSNotificationCenter (Additions)
 
@@ -15,7 +15,7 @@
         [self postNotificationName:aName object:anObject userInfo:aUserInfo];
     }
     else {
-        dispatch_sync(dispatch_get_main_queue(), ^{
+        dispatch_async(dispatch_get_main_queue(), ^{
             [self postNotificationName:aName object:anObject userInfo:aUserInfo];
         });
     }

@@ -4,7 +4,7 @@
 
 
 #import "YOAuth2ViewController.h"
-#import "NSNotificationCenter+Additions.h"
+#import "NSNotificationCenter+YDAdditions.h"
 #import "YDConstants.h"
 #import <WebKit/WebKit.h>
 
@@ -37,6 +37,8 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
 
+    self.view.backgroundColor = [UIColor whiteColor];
+    
     if((self.options & YOAuth2ViewControllerOptionsClearCookies) == YOAuth2ViewControllerOptionsClearCookies){
         [self clearLoginCookies];
     }
@@ -106,7 +108,8 @@
 }
 
 - (void)clearLoginCookies{
-    for(NSHTTPCookie *cookie in [[NSHTTPCookieStorage sharedHTTPCookieStorage] cookies]) {
+    NSArray<NSHTTPCookie *> *cookies = [[[NSHTTPCookieStorage sharedHTTPCookieStorage] cookies] copy];
+    for(NSHTTPCookie *cookie in cookies) {
         if([self isDomainValidForCookie:cookie domains:self.loginDomains]){
              [[NSHTTPCookieStorage sharedHTTPCookieStorage] deleteCookie:cookie];
         }

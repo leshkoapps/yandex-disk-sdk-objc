@@ -4,7 +4,7 @@
 
 
 #import "YDDiskRequest.h"
-#import "NSNotificationCenter+Additions.h"
+#import "NSNotificationCenter+YDAdditions.h"
 #import "YDConstants.h"
 
 

@@ -17,7 +17,6 @@
 		0FEAB893177893E400E17FFD /* DDXMLDocument.m in Sources */ = {isa = PBXBuildFile; fileRef = 0FEAB82E177867BB00E17FFD /* DDXMLDocument.m */; };
 		0FEAB894177893E400E17FFD /* DDXMLElement.m in Sources */ = {isa = PBXBuildFile; fileRef = 0FEAB830177867BB00E17FFD /* DDXMLElement.m */; };
 		0FEAB895177893E400E17FFD /* DDXMLNode.m in Sources */ = {isa = PBXBuildFile; fileRef = 0FEAB832177867BB00E17FFD /* DDXMLNode.m */; };
-		0FEAB8991778940C00E17FFD /* NSNotificationCenter+Additions.m in Sources */ = {isa = PBXBuildFile; fileRef = 0F569700175C9F5900622AB5 /* NSNotificationCenter+Additions.m */; };
 		0FEAB89C1778940C00E17FFD /* YOAuth2ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 0FABF59F176B350600355D74 /* YOAuth2ViewController.m */; };
 		0FEAB89D1778940C00E17FFD /* YDAbstractResponse.m in Sources */ = {isa = PBXBuildFile; fileRef = 0F5696D3175C94CE00622AB5 /* YDAbstractResponse.m */; };
 		0FEAB89E1778940C00E17FFD /* YDMultiStatusResponse.m in Sources */ = {isa = PBXBuildFile; fileRef = 0F5696D5175C94CE00622AB5 /* YDMultiStatusResponse.m */; };
@@ -49,7 +48,6 @@
 		0FEAB8EA1778959700E17FFD /* DDXMLDocument.m in Sources */ = {isa = PBXBuildFile; fileRef = 0FEAB82E177867BB00E17FFD /* DDXMLDocument.m */; };
 		0FEAB8EB1778959700E17FFD /* DDXMLElement.m in Sources */ = {isa = PBXBuildFile; fileRef = 0FEAB830177867BB00E17FFD /* DDXMLElement.m */; };
 		0FEAB8EC1778959700E17FFD /* DDXMLNode.m in Sources */ = {isa = PBXBuildFile; fileRef = 0FEAB832177867BB00E17FFD /* DDXMLNode.m */; };
-		0FEAB8F01778959700E17FFD /* NSNotificationCenter+Additions.m in Sources */ = {isa = PBXBuildFile; fileRef = 0F569700175C9F5900622AB5 /* NSNotificationCenter+Additions.m */; };
 		0FEAB8F41778959700E17FFD /* YDAbstractResponse.m in Sources */ = {isa = PBXBuildFile; fileRef = 0F5696D3175C94CE00622AB5 /* YDAbstractResponse.m */; };
 		0FEAB8F51778959700E17FFD /* YDMultiStatusResponse.m in Sources */ = {isa = PBXBuildFile; fileRef = 0F5696D5175C94CE00622AB5 /* YDMultiStatusResponse.m */; };
 		0FEAB8F61778959700E17FFD /* YDPropstatResponse.m in Sources */ = {isa = PBXBuildFile; fileRef = 0F5696D7175C94CE00622AB5 /* YDPropstatResponse.m */; };
@@ -80,7 +78,6 @@
 		0FEAB915177895E400E17FFD /* DDXMLElement.h in Headers */ = {isa = PBXBuildFile; fileRef = 0FEAB82F177867BB00E17FFD /* DDXMLElement.h */; settings = {ATTRIBUTES = (Private, ); }; };
 		0FEAB916177895E400E17FFD /* DDXMLNode.h in Headers */ = {isa = PBXBuildFile; fileRef = 0FEAB831177867BB00E17FFD /* DDXMLNode.h */; settings = {ATTRIBUTES = (Private, ); }; };
 		0FEAB917177895E400E17FFD /* DDXMLPrivate.h in Headers */ = {isa = PBXBuildFile; fileRef = 0FEAB834177867BB00E17FFD /* DDXMLPrivate.h */; settings = {ATTRIBUTES = (Private, ); }; };
-		0FEAB91B177895E400E17FFD /* NSNotificationCenter+Additions.h in Headers */ = {isa = PBXBuildFile; fileRef = 0F5696FF175C9F5900622AB5 /* NSNotificationCenter+Additions.h */; settings = {ATTRIBUTES = (Private, ); }; };
 		0FEAB91E177895E400E17FFD /* YOAuth2Delegate.h in Headers */ = {isa = PBXBuildFile; fileRef = 0F53D1791769F7D800622F5C /* YOAuth2Delegate.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		0FEAB920177895E400E17FFD /* YDAbstractResponse.h in Headers */ = {isa = PBXBuildFile; fileRef = 0F5696D2175C94CE00622AB5 /* YDAbstractResponse.h */; settings = {ATTRIBUTES = (Private, ); }; };
 		0FEAB921177895E400E17FFD /* YDMultiStatusResponse.h in Headers */ = {isa = PBXBuildFile; fileRef = 0F5696D4175C94CE00622AB5 /* YDMultiStatusResponse.h */; settings = {ATTRIBUTES = (Private, ); }; };
@@ -109,6 +106,9 @@
 		0FEAB94D17789A4A00E17FFD /* libxml2.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 0FEAB94C17789A4A00E17FFD /* libxml2.dylib */; };
 		0FEAB94E17789BAF00E17FFD /* libxml2.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 0FEAB94C17789A4A00E17FFD /* libxml2.dylib */; };
 		AC0355002424BF0800AD87D3 /* YDGETRequest.m in Sources */ = {isa = PBXBuildFile; fileRef = AC0354FE2424BF0800AD87D3 /* YDGETRequest.m */; };
+		AC2A5B3F254B5DAB00EE7C9D /* NSNotificationCenter+YDAdditions.h in Headers */ = {isa = PBXBuildFile; fileRef = AC2A5B3D254B5DAB00EE7C9D /* NSNotificationCenter+YDAdditions.h */; };
+		AC2A5B40254B5DAB00EE7C9D /* NSNotificationCenter+YDAdditions.m in Sources */ = {isa = PBXBuildFile; fileRef = AC2A5B3E254B5DAB00EE7C9D /* NSNotificationCenter+YDAdditions.m */; };
+		AC2A5B41254B5DAB00EE7C9D /* NSNotificationCenter+YDAdditions.m in Sources */ = {isa = PBXBuildFile; fileRef = AC2A5B3E254B5DAB00EE7C9D /* NSNotificationCenter+YDAdditions.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -180,8 +180,6 @@
 		0F5696D5175C94CE00622AB5 /* YDMultiStatusResponse.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = YDMultiStatusResponse.m; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
 		0F5696D6175C94CE00622AB5 /* YDPropstatResponse.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = YDPropstatResponse.h; sourceTree = "<group>"; };
 		0F5696D7175C94CE00622AB5 /* YDPropstatResponse.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = YDPropstatResponse.m; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
-		0F5696FF175C9F5900622AB5 /* NSNotificationCenter+Additions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; lineEnding = 0; path = "NSNotificationCenter+Additions.h"; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objcpp; };
-		0F569700175C9F5900622AB5 /* NSNotificationCenter+Additions.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = "NSNotificationCenter+Additions.m"; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
 		0F66BE5B178ED6B900D229B5 /* YDConstants.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; lineEnding = 0; path = YDConstants.h; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objcpp; };
 		0F66BE5C178ED6B900D229B5 /* YDConstants.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = YDConstants.m; sourceTree = "<group>"; };
 		0F92765D17673122006C7A3D /* WebKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WebKit.framework; path = System/Library/Frameworks/WebKit.framework; sourceTree = SDKROOT; };
@@ -231,6 +229,8 @@
 		0FEAB94C17789A4A00E17FFD /* libxml2.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libxml2.dylib; path = usr/lib/libxml2.dylib; sourceTree = SDKROOT; };
 		AC0354FE2424BF0800AD87D3 /* YDGETRequest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = YDGETRequest.m; sourceTree = "<group>"; };
 		AC0354FF2424BF0800AD87D3 /* YDGETRequest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = YDGETRequest.h; sourceTree = "<group>"; };
+		AC2A5B3D254B5DAB00EE7C9D /* NSNotificationCenter+YDAdditions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSNotificationCenter+YDAdditions.h"; sourceTree = "<group>"; };
+		AC2A5B3E254B5DAB00EE7C9D /* NSNotificationCenter+YDAdditions.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSNotificationCenter+YDAdditions.m"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -478,8 +478,8 @@
 		0F5696FE175C9F4A00622AB5 /* Categories */ = {
 			isa = PBXGroup;
 			children = (
-				0F5696FF175C9F5900622AB5 /* NSNotificationCenter+Additions.h */,
-				0F569700175C9F5900622AB5 /* NSNotificationCenter+Additions.m */,
+				AC2A5B3D254B5DAB00EE7C9D /* NSNotificationCenter+YDAdditions.h */,
+				AC2A5B3E254B5DAB00EE7C9D /* NSNotificationCenter+YDAdditions.m */,
 			);
 			name = Categories;
 			sourceTree = "<group>";
@@ -609,7 +609,6 @@
 				0FEAB916177895E400E17FFD /* DDXMLNode.h in Headers */,
 				0FEAB917177895E400E17FFD /* DDXMLPrivate.h in Headers */,
 				0F45050A1795374100103E8C /* YOAuth2Protocol.h in Headers */,
-				0FEAB91B177895E400E17FFD /* NSNotificationCenter+Additions.h in Headers */,
 				0F66BE5D178ED6B900D229B5 /* YDConstants.h in Headers */,
 				0FEAB91E177895E400E17FFD /* YOAuth2Delegate.h in Headers */,
 				0FEAB920177895E400E17FFD /* YDAbstractResponse.h in Headers */,
@@ -630,6 +629,7 @@
 				0FEAB933177895E400E17FFD /* YDStreamUploadRequest.h in Headers */,
 				0FEAB935177895E400E17FFD /* YDFileUploadRequest.h in Headers */,
 				0FEAB937177895E400E17FFD /* YDRequest.h in Headers */,
+				AC2A5B3F254B5DAB00EE7C9D /* NSNotificationCenter+YDAdditions.h in Headers */,
 				0FEAB938177895E400E17FFD /* YDDiskRequest.h in Headers */,
 				0FEAB939177895E400E17FFD /* YDMultistatusRequest.h in Headers */,
 				0FEAB93A177895E400E17FFD /* YDWebDAVCommon.h in Headers */,
@@ -734,12 +734,12 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AC2A5B40254B5DAB00EE7C9D /* NSNotificationCenter+YDAdditions.m in Sources */,
 				0FEAB891177893DA00E17FFD /* DDXMLElementAdditions.m in Sources */,
 				0FEAB892177893DD00E17FFD /* NSString+DDXML.m in Sources */,
 				0FEAB893177893E400E17FFD /* DDXMLDocument.m in Sources */,
 				0FEAB894177893E400E17FFD /* DDXMLElement.m in Sources */,
 				0FEAB895177893E400E17FFD /* DDXMLNode.m in Sources */,
-				0FEAB8991778940C00E17FFD /* NSNotificationCenter+Additions.m in Sources */,
 				0FEAB89C1778940C00E17FFD /* YOAuth2ViewController.m in Sources */,
 				0FEAB89D1778940C00E17FFD /* YDAbstractResponse.m in Sources */,
 				0FEAB89E1778940C00E17FFD /* YDMultiStatusResponse.m in Sources */,
@@ -775,10 +775,10 @@
 			files = (
 				0FEAB8E81778959700E17FFD /* DDXMLElementAdditions.m in Sources */,
 				0FEAB8E91778959700E17FFD /* NSString+DDXML.m in Sources */,
+				AC2A5B41254B5DAB00EE7C9D /* NSNotificationCenter+YDAdditions.m in Sources */,
 				0FEAB8EA1778959700E17FFD /* DDXMLDocument.m in Sources */,
 				0FEAB8EB1778959700E17FFD /* DDXMLElement.m in Sources */,
 				0FEAB8EC1778959700E17FFD /* DDXMLNode.m in Sources */,
-				0FEAB8F01778959700E17FFD /* NSNotificationCenter+Additions.m in Sources */,
 				0FEAB8F41778959700E17FFD /* YDAbstractResponse.m in Sources */,
 				0FEAB8F51778959700E17FFD /* YDMultiStatusResponse.m in Sources */,
 				0FEAB8F61778959700E17FFD /* YDPropstatResponse.m in Sources */,
